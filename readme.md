@@ -2,174 +2,94 @@
 
 This is a complete Retrieval-Augmented Generation (RAG) project that turns your personal data (like your CV) into a question-answering assistant using:
 
-- 🧠 **OpenAI** for generating embeddings & answering questions.
-- 🗃 **Pinecone** as a vector database for fast semantic search.
-- 🐍 **Python** with `dotenv` for secure config.
+- 🧠 **OpenAI** for generating embeddings & smart answers.
+- 🗃 **Pinecone** as a vector database for semantic search.
+- 🐍 **Python + FastAPI** for the backend.
+- ⚛️ **React + MUI** for the frontend.
 
 ---
 
 ## 💡 What does it do?
 
-✅ Loads your personal data from `data.txt`  
-✅ Generates embeddings for each chunk using OpenAI  
-✅ Stores them in Pinecone so you can **instantly query by meaning**  
-✅ When you ask a question, it finds the most relevant data & GPT generates an answer
+✅ Loads your personal data from multiple `.txt` files inside a `knowledge/` folder.  
+✅ Chunks and embeds using OpenAI, then uploads them to Pinecone.  
+✅ When you ask a question, it finds the most relevant chunks and generates a smart GPT-based answer.
 
 ---
 
 ## 🏗 Full project structure
 
-```
-rag-pinecone-v3/
-├── env/               # Python virtual environment
-├── .env               # Your API keys (never commit this)
-├── .gitignore          # Ignores secrets & env files
-├── requirements.txt    # Python dependencies
-├── data.txt            # Your personal knowledge base
-└── main.py             # Python script to run everything
-```
+rag-knowledge-assistant/
+├── env/ # Python virtual environment
+├── .env # Your API keys (never commit this)
+├── .gitignore # Ignores secrets & venv
+├── requirements.txt # Python packages
+├── fastapi_main.py # FastAPI server (answers questions over HTTP)
+├── knowledge/ # Folder with multiple .txt files
+│ ├── cv.txt
+│ ├── projects.txt
+│ └── skills.txt
+└── ask-gpt-app/ # React frontend (built in week 1)
 
 ---
 
-## 🔒 .env (example)
+## 🚀 How to run the project
 
-```
-OPENAI_API_KEY=sk-...
-PINECONE_API_KEY=your-pinecone-key
-PINECONE_INDEX=rag-knowledge-index-openai
-```
-
-✅ Place this file in your project root.  
-✅ Keep it safe — never commit to git.
-
----
-
-## 🚫 .gitignore (example)
-
-```
-.env
-env/
-__pycache__/
-*.pyc
-.DS_Store
-```
-
-This prevents committing sensitive files.
-
----
-
-## 📚 requirements.txt
-
-```
-openai
-pinecone
-python-dotenv
-```
-
-Install with:
-
-```
-pip install -r requirements.txt
-```
-
----
-
-## 📝 data.txt (example CV data)
-
-```
-Shubham Tiwari is a Senior Frontend Engineer with over 8+ years of experience, based in London, UK. 
-He specializes in React, Angular, Playwright, CI/CD, Docker, and building scalable UI architectures.
-
-At Directline Group, he improved automated testing to 90% coverage, reducing bugs by 80%.
-At Rackspace, he revamped legacy apps, improving performance by 70%, and built common Design Systems.
-At EY, he built customer-facing apps that increased productivity by 90%.
-
-He's experienced with Nx, Turborepo, GitHub Actions, Terraform, and is currently exploring LangChain, Pinecone, OpenAI, and RAG.
-```
-
-✅ Place this next to `main.py`.
-
----
-
-## 🚀 How to run locally
-
-### 1️⃣ Clone the repo & create your virtual environment
+### ✅ 1️⃣ Clone the repo & setup Python
 
 ```bash
-git clone https://github.com/yourusername/rag-pinecone-v3.git
-cd rag-pinecone-v3
+git clone https://github.com/yourusername/rag-knowledge-assistant.git
+cd rag-knowledge-assistant
 
 python3 -m venv env
 source env/bin/activate
+
 ```
 
----
-
-### 2️⃣ Install dependencies
-
+Install backend requirements
 ```bash
 pip install -r requirements.txt
 ```
 
----
+Your requirements.txt should look like:
 
-### 3️⃣ Set up your `.env` file
+fastapi
+uvicorn
+openai
+pinecone
+python-dotenv
 
-```
+✅ 3️⃣ Setup your .env file
+Create a .env file in your backend root with:
+
+
 OPENAI_API_KEY=sk-...
 PINECONE_API_KEY=your-pinecone-key
 PINECONE_INDEX=rag-knowledge-index-openai
+✅ This keeps your secrets out of git.
+(Your .gitignore includes .env and env/.)
+
+✅ 4️⃣ Prepare your knowledge files
+Create a knowledge/ folder and put any .txt files in there, e.g.:
+
+knowledge/
+├── cv.txt
+├── projects.txt
+└── skills.txt
+
+✅ 5️⃣ Run your FastAPI server
+```bash
+uvicorn fastapi_main:app --reload
 ```
 
----
+It will start on:
+http://127.0.0.1:8000
 
-### 4️⃣ Run the app
+
+✅ You can test with:
 
 ```bash
-python3 main.py
+curl -X POST "http://127.0.0.1:8000/ask" \
+    -H "Content-Type: application/json" \
+    -d '{"question":"What companies has Shubham worked for?"}'
 ```
-
-✅ It will read your `data.txt`, embed & upload it to Pinecone, then start an interactive chat:
-
-```
-✅ Uploaded X documents into Pinecone index 'rag-knowledge-index-openai'.
-Ask a question (or type 'exit'):
-```
-
----
-
-## 🔍 Example questions
-
-```
-What companies has Shubham worked for?
-What testing frameworks does he use?
-What is he exploring right now?
-What cloud tools has he used?
-exit
-```
-
----
-
-## 🔒 Security tips
-
-✅ Your `.env` is ignored by git (thanks to `.gitignore`), keeping your API keys safe.  
-✅ If you ever accidentally committed it, rotate your API keys immediately.
-
----
-
-## 🚀 Next ideas to enhance
-
-✅ Auto chunk long files to 500 characters with overlap  
-✅ Load PDFs or multiple text files  
-✅ Build a FastAPI backend or a React frontend for a portfolio chatbot
-
----
-
-## 🖐 Need help?
-
-Open an issue or connect on LinkedIn:  
-[Shubham Tiwari](https://www.linkedin.com/in/shubhamtiwari-appdev/)
-
----
-
-**Enjoy building your personal RAG assistant! 🚀**

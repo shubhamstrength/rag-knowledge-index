@@ -1,0 +1,1 @@
+Shubham's technical skills include: React, JavaScript, Angular, TypeScript, HTML5, CSS3, Bootstrap, CI/CD, Playwright, Front-End Development, automated testing, and deploying via Docker and GitHub Actions. He is currently exploring AI integrations using LangChain, Pinecone, OpenAI, and Retrieval-Augmented Generation (RAG) to build smart personal knowledge assistants.

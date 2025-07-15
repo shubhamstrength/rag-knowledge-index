@@ -1,8 +1,12 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # Load env
 load_dotenv()
@@ -18,7 +22,17 @@ client = OpenAI(api_key=openai_api_key)
 pc = Pinecone(api_key=pinecone_api_key)
 index = pc.Index(pinecone_index_name)
 
-# Chunk function: sliding window
+# FastAPI app
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 🔥 allows ALL origins. For production use your domain.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Chunk function
 def chunk_text(text, chunk_size=500, overlap=50):
     chunks = []
     start = 0
@@ -29,7 +43,7 @@ def chunk_text(text, chunk_size=500, overlap=50):
         start += chunk_size - overlap
     return chunks
 
-# 🔄 Load all txt files in /knowledge
+# Load knowledge
 knowledge_folder = Path("knowledge")
 all_chunks = []
 for file_path in knowledge_folder.glob("*.txt"):
@@ -56,20 +70,20 @@ for i, item in enumerate(all_chunks):
 
 print(f"✅ Upserted {len(all_chunks)} chunks into Pinecone index '{pinecone_index_name}'.")
 
-# 🧠 Interactive Q&A
-while True:
-    query = input("\nAsk a question (or type 'exit'): ")
-    if query.lower() == "exit":
-        break
+# Schema for request
+class Question(BaseModel):
+    question: str
 
+@app.post("/ask")
+async def ask_question(payload: Question):
     query_embedding = client.embeddings.create(
         model="text-embedding-3-small",
-        input=query
+        input=payload.question
     ).data[0].embedding
 
     res = index.query(vector=query_embedding, top_k=3, include_metadata=True)
 
-    # Defensive extraction
+    # Defensive metadata extraction
     contexts = []
     for match in res["matches"]:
         meta = match.get("metadata", {})
@@ -77,15 +91,12 @@ while True:
         source = meta.get("source", "unknown file")
         contexts.append(f"{text} (from {source})")
 
-    print("\nTop related contexts:")
-    for ctx in contexts:
-        print("-", ctx)
-
+    # Compose final GPT answer
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{
             "role": "user",
-            "content": f"Use the following context to answer the question:\n\n{contexts}\n\nQuestion: {query}"
+            "content": f"Use the following context to answer the question:\n\n{contexts}\n\nQuestion: {payload.question}"
         }]
     )
-    print("\n🤖 Answer:", response.choices[0].message.content)
+    return {"answer": response.choices[0].message.content}
